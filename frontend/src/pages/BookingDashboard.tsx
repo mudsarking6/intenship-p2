@@ -1,29 +1,88 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { createMockBooking, resources, seedBookings } from "../services/bookingService";
-import { DAYS as days, TIMES as times } from "../utils/calendar";
+import { DAYS, TIMES } from "../utils/calendar";
 
-export default function Home(){
-  const [bookings,setBookings]=useState(seedBookings),[resource,setResource]=useState("All resources"),[active,setActive]=useState("Calendar"),[view,setView]=useState("Week"),[modal,setModal]=useState(false),[menu,setMenu]=useState(false),[notice,setNotice]=useState("");
-  const visible=useMemo(()=>resource==="All resources"?bookings:bookings.filter(x=>x.resource===resource),[bookings,resource]);
-  function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const data=new FormData(e.currentTarget),selected=String(data.get("resource"));setBookings(x=>[...x,createMockBooking(selected,String(data.get("title")))]);setModal(false);setNotice(`${selected} booked for Friday at 4:00 PM.`);window.setTimeout(()=>setNotice(""),3500)}
-  return <main className="shell">
-    <aside className={`sidebar ${menu?"open":""}`}>
-      <button className="close" onClick={()=>setMenu(false)}>×</button><div className="brand"><span className="logo"><i/><i/><i/></span>SpaceSync</div>
-      <div className="workspace"><span>Z</span><p><b>Zeppelin Labs</b><small>Main workspace</small></p><i>⌄</i></div>
-      <nav><p className="nav-title">Workspace</p>{[["Calendar","▦"],["My bookings","◷"],["Resources","◇"]].map(([l,i])=><button className={active===l?"nav active":"nav"} key={l} onClick={()=>{setActive(l);setMenu(false)}}><i>{i}</i>{l}{l==="My bookings"&&<span>3</span>}</button>)}<p className="nav-title manage">Manage</p>{[["Analytics","⌁"],["Team & access","♙"],["Settings","⚙"]].map(([l,i])=><button className={active===l?"nav active":"nav"} key={l} onClick={()=>{setActive(l);setMenu(false)}}><i>{i}</i>{l}</button>)}</nav>
-      <div className="insight"><span>✦</span><b>Make every space count</b><p>Your workspace is 68% utilized this week.</p><button onClick={()=>setActive("Analytics")}>View insights →</button></div>
-      <div className="profile"><span>AK</span><p><b>Amna Khan</b><small>Space Admin</small></p><i>•••</i></div>
-    </aside>
-    <section className="main"><header><button className="hamburger" onClick={()=>setMenu(true)}>☰</button><label className="search"><span>⌕</span><input placeholder="Search spaces, bookings, people..."/><kbd>⌘ K</kbd></label><div className="actions"><button className="bell">♢<i/></button><button className="new" onClick={()=>setModal(true)}>＋ New booking</button></div></header>
-      <div className="page"><div className="heading"><div><p className="eyebrow">Friday, July 24</p><h1>Find your space</h1><p>See what&apos;s available and book a resource in seconds.</p></div><div className="available"><i/><p><b>12 spaces available</b><small>Right now across Main Campus</small></p></div></div>
-      {active!=="Calendar"?<section className="placeholder"><span>{active==="Analytics"?"⌁":"◇"}</span><h2>{active}</h2><p>This frontend section is ready for the next design pass. Return to the calendar to explore the booking flow.</p><button onClick={()=>setActive("Calendar")}>Back to calendar</button></section>:<>
-        <section className="filters"><label><span>Resource</span><select value={resource} onChange={e=>setResource(e.target.value)}><option>All resources</option>{resources.map(x=><option key={x.name}>{x.name}</option>)}</select></label><label><span>Building</span><select><option>Main Campus</option><option>North Wing</option></select></label><label><span>Capacity</span><select><option>Any size</option><option>1–4 people</option><option>5–10 people</option></select></label><button className="more">⚙ More filters <b>2</b></button></section>
-        <section className="calendar"><div className="toolbar"><div className="date"><button>‹</button><button>›</button><h2>July 20 – 24, 2026</h2><button className="today">Today</button></div><div className="views">{["Day","Week","Month"].map(x=><button className={view===x?"selected":""} onClick={()=>setView(x)} key={x}>{x}</button>)}</div></div><div className="calendar-scroll"><div className="grid"><div className="corner"/>{days.map(([d,n],i)=><div className={`day-head ${i===4?"current":""}`} key={d}><span>{d}</span><b>{n}</b></div>)}<div className="time-col">{times.map(x=><span key={x}>{x}</span>)}</div>{days.map(([d],di)=><div className="day-col" key={d}>{times.slice(0,-1).map(x=><div className="time-cell" key={x}/>)}{di===4&&<div className="now"><span>11:42</span></div>}{visible.filter(x=>x.day===di).map(x=><button className="booking" key={x.id} style={{top:`${(x.start-8)*68+8}px`,height:`${x.duration*68-8}px`,background:x.color}}><i style={{background:resources.find(r=>r.name===x.resource)?.color}}/><b>{x.title}</b><small>{x.resource}</small><span>{x.owner}</span></button>)}</div>)}</div></div></section>
-        <section className="below"><div><div className="section-head"><div><p className="eyebrow">Your schedule</p><h2>Coming up next</h2></div><button onClick={()=>setActive("My bookings")}>View all →</button></div><div className="upcoming"><div className="date-card"><b>24</b><span>JUL</span></div><div className="details"><span>Confirmed</span><h3>Research interview</h3><p>◷ 2:00 – 3:30 PM · ◇ Focus Pod 04</p></div><button>Check in</button><i>•••</i></div></div><div><div className="section-head"><div><p className="eyebrow">Live availability</p><h2>Free right now</h2></div></div><div className="resource-list">{resources.slice(0,3).map(x=><button key={x.name} onClick={()=>{setResource(x.name);window.scrollTo({top:180,behavior:"smooth"})}}><span style={{color:x.color,background:`${x.color}16`}}>◇</span><p><b>{x.name}</b><small>{x.meta}</small></p><i>Book →</i></button>)}</div></div></section>
-      </>}</div>
-    </section>
-    {menu&&<button className="overlay" onClick={()=>setMenu(false)}/>} {modal&&<div className="modal-wrap" onMouseDown={()=>setModal(false)}><section className="modal" onMouseDown={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setModal(false)}>×</button><p className="eyebrow">New reservation</p><h2>Book a space</h2><p className="intro">Choose a resource and we&apos;ll hold Friday at 4:00 PM for you.</p><form onSubmit={submit}><label>Booking title<input name="title" required placeholder="e.g. Team planning session" autoFocus/></label><label>Resource<select name="resource">{resources.map(x=><option key={x.name}>{x.name}</option>)}</select></label><div className="form-row"><label>Date<input value="Jul 24, 2026" readOnly/></label><label>Time<input value="4:00 – 5:00 PM" readOnly/></label></div><label>Attendees<input type="number" min="1" max="20" defaultValue="4"/></label><div className="conflict"><span>✓</span><p><b>This time is available</b><small>No conflicts or buffer restrictions.</small></p></div><button className="confirm">Confirm booking <span>→</span></button></form></section></div>}{notice&&<div className="toast"><span>✓</span>{notice}</div>}
-  </main>
+const navigation = [
+  { label: "Calendar", icon: "CA" },
+  { label: "My bookings", icon: "MB", count: 3 },
+  { label: "Resources", icon: "RS" },
+  { label: "Analytics", icon: "AN" },
+  { label: "Team & access", icon: "TM" },
+  { label: "Settings", icon: "ST" },
+];
+
+const sectionCopy: Record<string, { eyebrow: string; title: string; body: string }> = {
+  "My bookings": { eyebrow: "Personal workspace", title: "My bookings", body: "Manage upcoming reservations, recurring sessions, and previous visits." },
+  Resources: { eyebrow: "Space directory", title: "Resources", body: "Explore rooms, labs, equipment, and their live availability." },
+  Analytics: { eyebrow: "Workspace intelligence", title: "Analytics", body: "Understand utilization, booking patterns, and no-show trends." },
+  "Team & access": { eyebrow: "Administration", title: "Team & access", body: "Manage members, roles, and resource access groups." },
+  Settings: { eyebrow: "Workspace controls", title: "Settings", body: "Configure booking rules, notifications, and workspace preferences." },
+};
+
+function Sidebar({ active, onChange, open, onClose }: { active: string; onChange: (value: string) => void; open: boolean; onClose: () => void }) {
+  return <aside className={`sidebar ${open ? "is-open" : ""}`}>
+    <div className="sidebar-top">
+      <a className="brand" href="#top" aria-label="SpaceSync home"><span className="brand-symbol"><i /><i /><i /></span><span>SpaceSync<small>Workspace OS</small></span></a>
+      <button className="mobile-close" onClick={onClose} aria-label="Close navigation">x</button>
+    </div>
+    <button className="workspace-switcher"><span className="workspace-logo">ZL</span><span><b>Zeppelin Labs</b><small>Main Campus</small></span><i>v</i></button>
+    <nav aria-label="Primary navigation">
+      <p className="nav-heading">Workspace</p>
+      {navigation.slice(0, 3).map((item) => <button key={item.label} className={`nav-link ${active === item.label ? "active" : ""}`} onClick={() => { onChange(item.label); onClose(); }}><span className="nav-icon">{item.icon}</span><span>{item.label}</span>{item.count && <b>{item.count}</b>}</button>)}
+      <p className="nav-heading nav-spacer">Manage</p>
+      {navigation.slice(3).map((item) => <button key={item.label} className={`nav-link ${active === item.label ? "active" : ""}`} onClick={() => { onChange(item.label); onClose(); }}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></button>)}
+    </nav>
+    <div className="upgrade-card"><span className="upgrade-mark">PRO</span><h3>Make every space count</h3><p>Your workspace utilization is up 12% this month.</p><button onClick={() => onChange("Analytics")}>View insights <span>-&gt;</span></button></div>
+    <div className="profile"><span className="avatar">AK</span><span><b>Amna Khan</b><small>Space Admin</small></span><button aria-label="Open profile menu">...</button></div>
+  </aside>;
+}
+
+function Topbar({ onMenu, onBook }: { onMenu: () => void; onBook: () => void }) {
+  return <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={onMenu} aria-label="Open navigation">Menu</button><label className="global-search"><span>Search</span><input aria-label="Search workspace" placeholder="Rooms, bookings or people" /><kbd>Ctrl K</kbd></label></div><div className="topbar-actions"><button className="help-button">Help center</button><button className="notification-button" aria-label="Notifications"><span>3</span></button><button className="primary-button" onClick={onBook}><b>+</b> New booking</button></div></header>;
+}
+
+function StatCard({ label, value, change, tone }: { label: string; value: string; change: string; tone: string }) {
+  return <article className="stat-card"><div className={`stat-icon ${tone}`}>{label.slice(0, 2).toUpperCase()}</div><div><p>{label}</p><strong>{value}</strong><small>{change}</small></div></article>;
+}
+
+function Calendar({ resource, setResource, visible, view, setView }: { resource: string; setResource: (value: string) => void; visible: typeof seedBookings; view: string; setView: (value: string) => void }) {
+  return <section className="calendar-panel">
+    <div className="calendar-header"><div><p className="section-kicker">Availability calendar</p><h2>July 20 - 24, 2026</h2></div><div className="calendar-actions"><button className="square-button" aria-label="Previous week">&lt;</button><button className="today-button">Today</button><button className="square-button" aria-label="Next week">&gt;</button><div className="view-tabs">{["Day", "Week", "Month"].map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>{item}</button>)}</div></div></div>
+    <div className="filter-row"><label><span>Resource</span><select value={resource} onChange={(event) => setResource(event.target.value)}><option>All resources</option>{resources.map((item) => <option key={item.name}>{item.name}</option>)}</select></label><label><span>Location</span><select><option>Main Campus</option><option>North Wing</option><option>Innovation Hub</option></select></label><label><span>Capacity</span><select><option>Any capacity</option><option>1-4 people</option><option>5-10 people</option><option>10+ people</option></select></label><button className="filter-button">Filters <b>2</b></button></div>
+    <div className="calendar-scroll"><div className="calendar-grid"><div className="calendar-corner" />{DAYS.map(([day, date], index) => <div key={day} className={`day-header ${index === 4 ? "today" : ""}`}><span>{day}</span><b>{date}</b><small>{index === 4 ? "Today" : ""}</small></div>)}<div className="time-column">{TIMES.map((time) => <span key={time}>{time}</span>)}</div>{DAYS.map(([day], dayIndex) => <div className="day-column" key={day}>{TIMES.slice(0, -1).map((time) => <div className="time-slot" key={time} />)}{dayIndex === 4 && <div className="current-time"><span>11:42</span></div>}{visible.filter((item) => item.day === dayIndex).map((item) => <button className="booking-card" key={item.id} style={{ top: `${(item.start - 8) * 72 + 7}px`, height: `${item.duration * 72 - 8}px`, background: item.color }}><i style={{ background: resources.find((entry) => entry.name === item.resource)?.color }} /><span><b>{item.title}</b><small>{item.resource}</small><em>{item.owner}</em></span></button>)}</div>)}</div></div>
+  </section>;
+}
+
+function TodayPanel({ onBook }: { onBook: () => void }) {
+  return <aside className="today-panel"><div className="panel-title"><div><p className="section-kicker">Your day</p><h2>Today</h2></div><span>3 bookings</span></div><article className="next-booking"><div className="next-top"><span>Up next</span><small>Starts in 2h 18m</small></div><h3>Research interview</h3><p>Focus Pod 04</p><div className="meeting-meta"><span><b>02:00</b><small>Start</small></span><i /><span><b>03:30</b><small>End</small></span></div><div className="attendees"><span className="mini-avatar">AK</span><span className="mini-avatar blue">OH</span><p>2 attendees</p></div><button className="checkin-button">Check in now</button></article><div className="timeline"><div className="timeline-item done"><span>09:00</span><i /><p><b>Product stand-up</b><small>Atlas Room</small></p></div><div className="timeline-item"><span>02:00</span><i /><p><b>Research interview</b><small>Focus Pod 04</small></p></div><div className="timeline-item"><span>04:30</span><i /><p><b>Weekly review</b><small>Atlas Room</small></p></div></div><button className="secondary-wide" onClick={onBook}>+ Add another booking</button></aside>;
+}
+
+function ResourceStrip({ onSelect }: { onSelect: (value: string) => void }) {
+  return <section className="resources-section"><div className="section-title"><div><p className="section-kicker">Book in seconds</p><h2>Available right now</h2></div><button>View all resources -&gt;</button></div><div className="resource-grid">{resources.map((item, index) => <button key={item.name} className="resource-card" onClick={() => onSelect(item.name)}><div className={`resource-visual visual-${index + 1}`}><span>{item.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</span><b>Available</b></div><div className="resource-content"><div><h3>{item.name}</h3><p>{item.meta}</p></div><span className="arrow">-&gt;</span><div className="amenities"><span>{index === 1 ? "Lab" : index === 3 ? "Equipment" : "Room"}</span><span>{index === 2 ? "Quiet" : "Screen"}</span></div></div></button>)}</div></section>;
+}
+
+function SectionPreview({ active, onBook }: { active: string; onBook: () => void }) {
+  const copy = sectionCopy[active];
+  const cards = active === "Analytics" ? [["Utilization", "68%", "+12% this month"], ["Peak hour", "2 PM", "Most requested"], ["No-show rate", "4.2%", "Down 1.8%"]] : active === "Team & access" ? [["Members", "84", "76 active"], ["Access groups", "7", "3 restricted"], ["Pending invites", "4", "Review access"]] : active === "Resources" ? [["Rooms", "18", "12 available"], ["Equipment", "24", "20 available"], ["Labs", "6", "3 available"]] : active === "Settings" ? [["Booking window", "90 days", "Workspace default"], ["Buffer time", "10 min", "Between bookings"], ["Reminders", "Enabled", "Email and check-in"]] : [["Upcoming", "3", "Next at 2 PM"], ["This month", "12", "18 total hours"], ["No-shows", "0", "Perfect record"]];
+  return <div className="section-page"><div className="section-hero"><div><p className="section-kicker">{copy.eyebrow}</p><h1>{copy.title}</h1><p>{copy.body}</p></div><button className="primary-button" onClick={onBook}>+ New booking</button></div><div className="preview-stats">{cards.map(([label, value, detail], index) => <article key={label}><span className={`preview-icon color-${index + 1}`}>{label.slice(0, 2).toUpperCase()}</span><p>{label}</p><strong>{value}</strong><small>{detail}</small></article>)}</div><section className="management-card"><div className="management-head"><div><p className="section-kicker">Overview</p><h2>{active === "Resources" ? "Resource directory" : active === "Team & access" ? "Member access" : active === "Settings" ? "Workspace preferences" : active === "Analytics" ? "Utilization trend" : "Upcoming reservations"}</h2></div><button>Export</button></div><div className="table-head"><span>Name</span><span>Status</span><span>Details</span><span>Action</span></div>{resources.slice(0, 3).map((item, index) => <div className="table-row" key={item.name}><span><i className={`row-avatar color-${index + 1}`}>{item.name[0]}</i><b>{active === "Team & access" ? ["Amna Khan", "Omar Hassan", "Maya Ali"][index] : item.name}</b></span><span><em>Active</em></span><span>{active === "Settings" ? "Configured" : item.meta}</span><button>Manage</button></div>)}</section></div>;
+}
+
+function BookingModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (event: React.FormEvent<HTMLFormElement>) => void }) {
+  return <div className="modal-backdrop" onMouseDown={onClose}><section className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><p className="section-kicker">Create reservation</p><h2 id="booking-title">Book a resource</h2></div><button onClick={onClose} aria-label="Close booking form">x</button></div><p className="modal-copy">Reserve a space for Friday, July 24. Availability is checked instantly.</p><form onSubmit={onSubmit}><label><span>Booking title</span><input name="title" required placeholder="Team planning session" autoFocus /></label><label><span>Resource</span><select name="resource">{resources.map((item) => <option key={item.name}>{item.name}</option>)}</select></label><div className="form-row"><label><span>Date</span><input value="Friday, July 24" readOnly /></label><label><span>Time</span><input value="4:00 PM - 5:00 PM" readOnly /></label></div><label><span>Attendees</span><input type="number" min="1" max="20" defaultValue="4" /></label><div className="availability-check"><span>OK</span><p><b>This time is available</b><small>No conflicts or buffer restrictions found.</small></p></div><div className="modal-actions"><button type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit">Confirm booking</button></div></form></section></div>;
+}
+
+export default function BookingDashboard() {
+  const [bookings, setBookings] = useState(seedBookings);
+  const [resource, setResource] = useState("All resources");
+  const [active, setActive] = useState("Calendar");
+  const [view, setView] = useState("Week");
+  const [modal, setModal] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [notice, setNotice] = useState("");
+  const visible = useMemo(() => resource === "All resources" ? bookings : bookings.filter((item) => item.resource === resource), [bookings, resource]);
+  function submitBooking(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); const data = new FormData(event.currentTarget); const selected = String(data.get("resource")); setBookings((current) => [...current, createMockBooking(selected, String(data.get("title")))]); setModal(false); setNotice(`${selected} booked for Friday at 4:00 PM.`); window.setTimeout(() => setNotice(""), 3500); }
+  function selectResource(value: string) { setResource(value); setActive("Calendar"); window.scrollTo({ top: 250, behavior: "smooth" }); }
+  return <main className="app-shell" id="top"><Sidebar active={active} onChange={setActive} open={menu} onClose={() => setMenu(false)} /><section className="content-shell"><Topbar onMenu={() => setMenu(true)} onBook={() => setModal(true)} />{active === "Calendar" ? <div className="dashboard"><section className="dashboard-hero"><div><div className="welcome-line"><span>Friday, July 24</span><i />Main Campus</div><h1>Good morning, Amna.</h1><p>Here is what is happening across your workspace today.</p></div><button className="primary-button hero-button" onClick={() => setModal(true)}>+ Book a resource</button></section><section className="stats-grid"><StatCard label="Available now" value="12" change="of 24 resources" tone="green" /><StatCard label="Bookings today" value="18" change="6 starting soon" tone="blue" /><StatCard label="Utilization" value="68%" change="12% above average" tone="violet" /><StatCard label="Pending approvals" value="04" change="Requires your review" tone="amber" /></section><div className="workspace-grid"><Calendar resource={resource} setResource={setResource} visible={visible} view={view} setView={setView} /><TodayPanel onBook={() => setModal(true)} /></div><ResourceStrip onSelect={selectResource} /></div> : <SectionPreview active={active} onBook={() => setModal(true)} />}</section>{menu && <button className="mobile-overlay" onClick={() => setMenu(false)} aria-label="Close navigation overlay" />}{modal && <BookingModal onClose={() => setModal(false)} onSubmit={submitBooking} />}{notice && <div className="toast"><span>OK</span>{notice}</div>}</main>;
 }
