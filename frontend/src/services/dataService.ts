@@ -1,0 +1,12 @@
+import { apiRequest, AuthUser } from "./authService";
+export type Resource={id:string;name:string;type:string;location:string;capacity:number;amenities:string[];requiresApproval:boolean;status:string};
+export type Booking={id:string;title:string;resourceId:string;resourceName:string;startAt:string;endAt:string;attendees:number;notes:string;status:string;createdBy:string;createdByName:string};
+export const getDashboard=()=>apiRequest<{stats:{resources:number;bookings:number;users:number;pending:number}}>("/dashboard");
+export const getResources=()=>apiRequest<{resources:Resource[]}>("/resources");
+export const addResource=(input:Partial<Resource>)=>apiRequest<{resource:Resource}>("/resources",{method:"POST",body:JSON.stringify(input)});
+export const getBookings=()=>apiRequest<{bookings:Booking[]}>("/bookings");
+export const addBooking=(input:Record<string,unknown>)=>apiRequest<{booking:Booking}>("/bookings",{method:"POST",body:JSON.stringify(input)});
+export const setBookingStatus=(id:string,status:string)=>apiRequest<{message:string}>(`/bookings/${id}/status`,{method:"PATCH",body:JSON.stringify({status})});
+export const cancelBooking=(id:string)=>apiRequest<{message:string}>(`/bookings/${id}`,{method:"DELETE"});
+export const getUsers=()=>apiRequest<{users:AuthUser[]}>("/users");
+export const updateProfile=(input:{name:string;phone:string;jobTitle:string})=>apiRequest<{user:AuthUser}>("/profile",{method:"PATCH",body:JSON.stringify(input)});

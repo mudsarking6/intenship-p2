@@ -1,1 +1,1 @@
-﻿export { default } from "./pages/BookingDashboard";
+export { default } from "./pages/AuthGateway";

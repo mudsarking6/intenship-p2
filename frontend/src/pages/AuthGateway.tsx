@@ -1,0 +1,27 @@
+"use client";
+import { FormEvent, useEffect, useState } from "react";
+import { AuthUser, forgotPassword, getCurrentUser, login, logout, register } from "../services/authService";
+import BookingDashboard from "./BookingDashboard";
+
+type View="login"|"register"|"forgot";
+function Logo(){return <div className="auth-logo"><span><i/><i/><i/></span><b>SpaceSync<small>Resource operations</small></b></div>}
+function Splash(){return <main className="splash"><div className="splash-glow"/><section><Logo/><div className="splash-calendar"><i/><i/><i/><i/></div><h1>Every space.<br/><span>Perfectly timed.</span></h1><p>Preparing your workspace...</p><div className="loading-line"><i/></div></section></main>}
+
+export default function AuthGateway(){
+ const[checking,setChecking]=useState(true),[view,setView]=useState<View>("login"),[user,setUser]=useState<AuthUser|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
+ useEffect(()=>{const started=Date.now();getCurrentUser().then(setUser).finally(()=>window.setTimeout(()=>setChecking(false),Math.max(0,1100-(Date.now()-started))))},[]);
+ async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setMessage("");const values=Object.fromEntries(new FormData(event.currentTarget));try{if(view==="login")setUser(await login(String(values.email),String(values.password)));else if(view==="register"){if(values.password!==values.confirmPassword)throw new Error("Passwords do not match.");setUser(await register({name:String(values.name),email:String(values.email),password:String(values.password),organization:String(values.organization)}))}else{const result=await forgotPassword(String(values.email));setMessage(result.message)}}catch(reason){setError(reason instanceof Error?reason.message:"Please try again.")}finally{setBusy(false)}}
+ function changeView(next:View){setView(next);setError("");setMessage("")}
+ if(checking)return <Splash/>;
+ if(user)return <BookingDashboard currentUser={user} onLogout={()=>{logout();setUser(null)}}/>;
+ return <main className="auth-page"><section className="auth-story"><div><Logo/><p className="auth-kicker">WORKSPACE INTELLIGENCE</p><h1>Make every shared<br/>resource <span>work better.</span></h1><p className="auth-copy">Discover rooms, coordinate teams, and keep your workspace moving—all from one beautifully organized platform.</p></div><div className="auth-visual"><header><b>Today’s workspace</b><span>Live</span></header><div className="auth-stat"><strong>68%</strong><p><b>Utilization</b><small>12% above average</small></p></div><article><b>Atlas Room</b><i/><span>09:00</span></article><article><b>Horizon Lab</b><i/><span>11:30</span></article><article><b>Focus Pod 04</b><i/><span>14:00</span></article></div><footer><span>24 resources</span><span>12 free now</span><span>Live updates</span></footer></section>
+ <section className="auth-panel"><div className="auth-mobile-logo"><Logo/></div><form className="auth-card" onSubmit={submit}><div className="auth-heading"><p>{view==="register"?"START YOUR WORKSPACE":view==="forgot"?"ACCOUNT RECOVERY":"WELCOME BACK"}</p><h2>{view==="register"?"Create your account":view==="forgot"?"Reset your password":"Sign in to SpaceSync"}</h2><span>{view==="register"?"Set up your profile and enter the workspace.":view==="forgot"?"Enter your email and we’ll prepare recovery instructions.":"Use your workspace credentials to continue."}</span></div>
+ {view==="register"&&<div className="auth-row"><label><span>Full name</span><input name="name" required minLength={2} placeholder="Amna Khan"/></label><label><span>Organization</span><input name="organization" required defaultValue="Zeppelin Labs"/></label></div>}
+ <label><span>{view==="register"?"Work email":"Username or email"}</span><input name="email" type={view==="register"?"email":"text"} required autoComplete="username" placeholder={view==="register"?"you@company.com":"Username or work email"}/></label>
+ {view!=="forgot"&&<label><span>Password</span><input name="password" type="password" required minLength={8} autoComplete={view==="login"?"current-password":"new-password"} placeholder="At least 8 characters"/></label>}
+ {view==="register"&&<label><span>Confirm password</span><input name="confirmPassword" type="password" required minLength={8} autoComplete="new-password" placeholder="Repeat your password"/></label>}
+ {view==="login"&&<div className="auth-between"><label className="remember"><input type="checkbox" defaultChecked/><span>Keep me signed in</span></label><button type="button" onClick={()=>changeView("forgot")}>Forgot password?</button></div>}
+ {error&&<div className="auth-alert error"><b>!</b>{error}</div>}{message&&<div className="auth-alert success"><b>✓</b>{message}</div>}
+ <button className="auth-submit" disabled={busy}>{busy?<><i className="spinner"/>Please wait...</>:view==="login"?"Sign in to workspace":view==="register"?"Create account":"Send recovery instructions"}</button>
+ <div className="auth-switch">{view==="login"?<>New to SpaceSync? <button type="button" onClick={()=>changeView("register")}>Create an account</button></>:<>Already have an account? <button type="button" onClick={()=>changeView("login")}>Back to sign in</button></>}</div></form><footer className="auth-legal">By continuing, you agree to the Terms of Service and Privacy Policy.</footer></section></main>
+}
